@@ -4,9 +4,9 @@ import argparse
 import os,sys
 import re
 import sys
-sys.path.insert(0, '../modules/')
-import filelib as flib
-import parsers as parse
+sys.path.insert(0, '../tools')
+import modules.filelib as flib
+import modules.parsers as parse
 import ipdb
 
 parser = argparse.ArgumentParser(
@@ -40,7 +40,7 @@ examples:
     dns_gen_records.py c --out
     dns_gen_records.py public
 
-    dns_gen_records.py loop --dir='/home/ababson/configs/NETWORK/configs'
+    dns_gen_records.py loop --dir='/home/me/configs/NETWORK/'
 
       '''))
 parser.add_argument(
