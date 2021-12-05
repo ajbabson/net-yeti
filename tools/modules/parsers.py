@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-import modules.shared_regex as rgx
+import shared_regex as rgx
 
 def ios(hostname, E, host_ip_dict):
     def parse_intf(intf, E):

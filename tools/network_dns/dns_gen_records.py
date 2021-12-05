@@ -3,9 +3,11 @@
 import argparse
 import os,sys
 import re
-import modules.filelib as flib
-import modules.parsers as parse
-import modules.ipdb as ipdb
+import sys
+sys.path.insert(0, '../modules/')
+import filelib as flib
+import parsers as parse
+import ipdb
 
 parser = argparse.ArgumentParser(
   formatter_class = argparse.RawDescriptionHelpFormatter,
@@ -82,6 +84,9 @@ else:
 
 def gen_reverse_zone(db_dict):
     zone = db_dict.pop('zone')
+    if len(db_dict) == 0:
+        print('No records found that match {0}.'.format(zone))
+        return False
     print('writing', ipdb.zone_dir + zone)
     with open(ipdb.zone_dir + zone, 'wt') as fh:
         fh.write('{0}'.format(ipdb.soa))
