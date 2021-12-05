@@ -1,16 +1,15 @@
-<!-- TITLE: Network DNS Project -->
-<!-- SUBTITLE: How to set up and run a BIND-like PowerDNS Server -->
-<!-- CREATOR: ababson -->
-<!-- MODIFIED: ababson 25/05/20 -->
-# Network DNS Project
-I set out on a mission to find a lightweight, easily configurable non-fancy DNS server that could just "serve records" efficiently as an authoritative name server for:
+# Network Reverse DNS Project
+DNS independence is sometimes a good thing.  Nothing beats a locally available copy of all your forward and reverse DNS records.  A recent, very high-visibility outage helps prove the point.
 
-- `net.arkadin.lan`
-- The parts of `10.in-addr.arpa` that generally contain network IP addresses, usually the highest /29 in each /24.
-- `16.172.in-addr.arpa` Network should own all of this since it is reserved for link addressing and not end hosts, although some legacy end hosts use it.
-- `168.192.in-addr.arpa` Network should own all of this since it is reserved for loopback addressing, although there is a possibility in the future delegating sub zone files for server/host loopbacks.
+Another problem is arises from DNS administrative boundaries.  In a previous role, I found that every reverse record I wanted added for network IP addresses required a cumbersome ticket submission process to a separate department that controlled authoritative access of reverse zone files.  Due to the frequency of new provisioning and changes in the network environment, this situation was not tenable.
 
-I also wanted something that has an actively maintained Debian package (no I don't care about CentOS, really, I don't...) to make installation and updating easy.  Finally, the name server needed to be authoritative but also serve as a resolver so that our infrastructure servers can just point to a single name server for all their DNS needs.  My first choice was Knot but I found the documentation to be poor and the setup not that intuitive which means after a few hours of struggling with it, I still didn't have a working name server.  So it was time to move on.
+There are certainly good arguments for not having parallel DNS systems.  However, DNS is not the tool to ensure that you don't have IP address conflicts.  In general, the only systems that really need reverse address info are those systems you are using for network access and troubleshooting.  It's nice if those systems can also resolve PTR records for application servers, but that can also easily be done in a separate terminal from a system that can resolve those addresses.  What I primarily needed was to be able to get valid host and interface information when running traceroutes through the network or when faced with a long list of IP addresses that I needed to identify.
+
+I set out on a mission to find a lightweight, easily configurable non-fancy DNS server that could just "serve records" efficiently as an authoritative name server for zone files containing my entire network's PTR records.
+
+I also wanted something that has an actively maintained Debian package (no I don't care about CentOS, really, I don't...) to make installation and updating easy.  Finally, the name server needed to be authoritative but also serve as a resolver so that our infrastructure servers can just point to a single name server for all their DNS needs.  The end result of this design is that a host that uses the DNS server that is created can perform all necessary forward DNS resolution, because the only forward records it is authoritative to are in a subdomain which is dedicated to only network hosts.  The only drawback is that the PTR records that it is authoritative for will be missing PTR records for all hosts that are not part of the configuration backups that the `dns_gen_records.py` script parses.  If you have some important PTR records that aren't in your network backups, you can statically declare them in the customizable `ipdb.py`.
+
+My first choice for this project was Knot but I found the documentation to be poor and the setup not that intuitive which means after a few hours of struggling with it, I still didn't have a working name server.  So it was time to move on.  Maybe the documentation is better now.  I wrote this a couple years ago.
 
 My next choice was <a href="https://www.powerdns.com/" target="_blank">PowerDNS</a>.  The documentation still isn't great, but I found it to be better than Knot.  The slightly better documentation combined with the fact that the setup of using a BIND-style zone file backend meant that I was able to stumble my way through the setup and configuration without too much effort.  This wiki page attempts to describe everything I did to get it set up and working, should this task ever need to be repeated.
 
@@ -90,13 +89,13 @@ BIND's `named.conf` supports a wide range of options and directives of which man
 
 *The BIND backend parses a BIND-style named.conf and extracts information about zones from it. It makes no attempt to honour other configuration flags, which you should configure (when available) using the PowerDNS native configuration.*
 
-For our use case we simply create the contents of `bindbackend.conf` from scratch and the configuration for each zone we want to serve is quite simple.
+For our use case we simply create the contents of `bindbackend.conf` from scratch and the configuration for each zone we want to serve is quite simple.  Please note that in this example, I used db.172 so I could put all records for 172.16/12 in a single zone file.  This is because I knew i did not need this server to be able to resolve any public records in 172/8 that fall outside of the 172.16/12 private range.  The script provided in this project expicitly declares all of the /16 ranges that are part of 172.16/12. You can easily modify the `ipdb.py` file to use a single db.172 zone file as I did.
 
 ```
-root@pa2dns01:/etc/powerdns# cat bindbackend.conf
+root@netns01:/etc/powerdns# cat bindbackend.conf
 zone "net.arkadin.lan" in {
   type master;
-  file "/etc/powerdns/zones/db.net.arkadin.lan";
+  file "/etc/powerdns/zones/db.foo.example.net";
 };
 
 zone "10.in-addr.arpa" in {
@@ -132,11 +131,11 @@ As for 172.16.0.0/12 addresses, we know that there have been some addresses acci
 As you can see in the `bindbackend.conf` file, the zones files are here:
 
 ```
-root@pa2dns01:~# ls -1 /etc/powerdns/zones/
+root@netns01:~# ls -1 /etc/powerdns/zones/
 db.10
 db.172
 db.192.168
-db.net.arkadin.lan
+db.foo.example.net
 ```
 
 ### Format
@@ -145,34 +144,21 @@ The first several lines of each zone file are exactly the same.  The `@` charact
 
 ```
 $TTL 4h
-@ IN SOA pa2dns01.net.arkadin.lan. nio.arkadin.com. (
+@ IN SOA netns01.foo.example.net. admin.example.com. (
      1     ; Serial
      3h    ; Refresh after 3 hours
      1h    ; Retry after 1 hour
      1w    ; Expire after 1 week
      1h )  ; Negative caching TTL of 1 hour
 
-@              IN NS     pa2dns01.net.arkadin.lan
-pa2dns01       IN A      10.124.23.53
+@              IN NS     netns01.foo.example.net.
+ns1            IN A      192.0.2.1
 ```
 
 At this point I haven't bothered trying to optimize any of the cache values and may look at doing this in the future.  I also haven't yet implemented actually using the serial number but this will probably come at the point we decide versioning on these zone files and is a topic for discussion.
 
-Below these lines, each zone file simply contains the host records.  Here's an example from each of the four zone files:
+Below these lines, each zone file simply contains the host records.  Statically declared records are added first, then the dynamically generated hosts records for the reverse zones only.  The script does not generate any forward DNS records for hostnames since it doesn't know which of the many IP addresses available on a system should be used for access.  This functionality is certainly possible if you use a consistent naming convention on the interface that should be used for access.  This is left as an exercise for the reader.
 
-```
-# db.10 - reverse record for 10.100.125.254
-254.125.100    IN PTR    atlcore02-vl125-hsrp.net.arkadin.lan
-
-# db.172 - reverse record for 172.16.0.2
-2.0.16         IN PTR    shiixrt01-gi0-0-1-2603.net.arkadin.lan
-
-# db.192.168 - reverse record for 192.168.4.1
-1.4            IN PTR    tau-bl-01-lo0-1.net.arkadin.lan
-
-# db.net.arkadin.lan - forward record
-atl-bastion-01    IN  A      10.0.1.2
-```
 
 ## Serving the Data
 
@@ -183,11 +169,11 @@ You can see the current status of one or all zones with the `bind-domain-status`
 `pdns_control bind-domain-status [domain]`
 
 ```
-ababson@pa2dns01:~$ sudo pdns_control bind-domain-status
+ajbabson@netns01:~$ sudo pdns_control bind-domain-status
 172.in-addr.arpa:       parsed into memory at 2020-02-18 17:02:29 +0100
 10.in-addr.arpa:        parsed into memory at 2020-02-18 17:02:29 +0100
 192.168.in-addr.arpa: [rejected]         error at 2020-02-18 17:02:29 +0100 parsing '192.168.in-addr.arpa.' from file '/etc/powerdns/zones/db.192.168': Trying to insert non-zone data, name='net.arkadin.lan.', qtype=SOA, zone='192.168.in-addr.arpa.'
-net.arkadin.lan:        parsed into memory at 2020-02-18 17:02:29 +0100
+foo.example.net:        parsed into memory at 2020-02-18 17:02:29 +0100
 ```
 
 Above we see that there is an error with 192.168.in-addr.arpa.  After fixing the error, I used the following command to reload the zone.
@@ -195,24 +181,24 @@ Above we see that there is an error with 192.168.in-addr.arpa.  After fixing the
 `pdns_control bind-reload-now {domain}`
 
 ```
-ababson@pa2dns01:~$ sudo pdns_control bind-reload-now 192.168.in-addr.arpa
+ajbabson@netns01:~$ sudo pdns_control bind-reload-now 192.168.in-addr.arpa
 192.168.in-addr.arpa:   parsed into memory at 2020-02-19 10:01:09 +0100
-ababson@pa2dns01:~$ sudo pdns_control bind-domain-status 192.168.in-addr.arpa
+ajbabson@netns01:~$ sudo pdns_control bind-domain-status 192.168.in-addr.arpa
 192.168.in-addr.arpa:   parsed into memory at 2020-02-19 10:02:27 +0100
 ```
 
 A less detailed option is `list-zones`.  For some reason I haven't yet figured out, it lists each zone twice.  Maybe this is a "feature"...
 
 ```
-ababson@pa2dns01:~$ sudo pdns_control list-zones
+ajbabson@netns01:~$ sudo pdns_control list-zones
 172.in-addr.arpa.
 10.in-addr.arpa.
 192.168.in-addr.arpa.
-net.arkadin.lan.
+foo.example.net.
 172.in-addr.arpa.
 10.in-addr.arpa.
 192.168.in-addr.arpa.
-net.arkadin.lan.
+foo.example.net.
 All zonecount:8
 ```
 
@@ -227,7 +213,7 @@ To load a new zone, you must of course add the new zone declarations to `bindbac
 `pdns_control bind-add-zone {domain} {zone_file}`
 
 ```
-ababson@pa2dns01:~$ sudo pdns_control bind-add-zone net.arkadin.lan db.net.arkadin.lan
+ajbabson@pnetns01:~$ sudo pdns_control bind-add-zone net.arkadin.lan db.net.arkadin.lan
 Already loaded
 ```
 
@@ -243,37 +229,3 @@ The idea for now is that the full list of PTR records can be generated periodica
 
 This script does not produce any forward records.  The forward zone for `net.arkadin.lan` must be maintained by hand but this is actually much less work than maintaining the reverse records.  Additional controls around serial number and versioning of the zone files needs to be put into place after further discussion on the subject.
 
-```
-ababson@atlnetutil01:tools(master)$ ./dns_gen_records.py -h
-usage: dns_gen_records.py [-h] [--dir DIR] ptr_class
-
-positional arguments:
-  ptr_class   Which class of addresses to process: host, link, or loop.
-
-optional arguments:
-  -h, --help  show this help message and exit
-  --dir DIR   Directory where network host configs are located.
-
-Parse network hosts configurations and print BIND style reverse zone files
-for RFC1918 IP addresses based on the following address classes:
-
-host: 10.0.0.0/8
-link: 172.0.0.0/8 (due to misuse of addresses, the entire 172/8 is checked)
-loop: 192.168.0.0/16
-
-Network host configurations are parsed to obtain the IP address data so you must
-provide a directory with a configuration file for each host you want to process.
-
-By default the script checks your home directory for a .conf_dir file which
-contains the path to the network configurations.
-
-ababson@atlnetutil01:~$ cat .conf_dir
-/home/ababson/configs/NETWORK/configs
-
-examples:
-    dns_gen_records.py host
-    dns_gen_records.py link
-    dns_gen_records.py loop
-
-    dns_gen_records.py loop --dir='/home/ababson/configs/NETWORK/configs'
-```
