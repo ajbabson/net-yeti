@@ -26,8 +26,9 @@ provide a directory with a configuration file for each host you want to process.
 The script checks for the location of configs in the following order:
 
 1. A path provided the --dir argument
-2. A path provided in a file named ~/.conf_dir
-3. Default path is ./configs/
+2. A path provided in the environment variable $CONF_DIR
+3. A path provided in a file named ~/.conf_dir
+4. Default path is ./configs/
 
 The easiest is just to run the script while logged in to atlrancid01 and use the
 default path.
@@ -65,22 +66,28 @@ args = parser.parse_args()
 
 domain = 'example.com.'
 
+def get_conf_dir():
+    conf_dir = os.environ.get('CONF_DIR')
+    if conf_dir:
+        return conf_dir
+    userhome = os.getenv('HOME')
+    conf_dir_var = '/'.join([userhome, '.conf_dir'])
+    if os.path.isfile(conf_dir_var):
+        with open(conf_dir_var, 'rt') as fh:
+            conf_dir = fh.readlines()
+            for line in conf_dir:
+                if line.startswith('#'):
+                    continue
+                else:
+                    conf_dir = line.rstrip()
+        if os.path.isdir(conf_dir):
+            return conf_dir
+    return 'configs/'
+
 if args.dir:
     conf_dir = args.dir
 else:
-    # first check for a custom directory specified by ~/.conf_dir
-    userhome = os.getenv('HOME')
-    conf_dir_var = '/'.join([userhome, '.conf_dir'])
-    if os.path.exists(conf_dir_var):
-        with open(conf_dir_var, 'rt') as fh:
-            conf_dir = fh.readlines()
-        for line in conf_dir:
-            if line.startswith('#'):
-                continue
-            else:
-                conf_dir = line.rstrip()
-    else:
-        conf_dir = 'configs/'
+    conf_dir = get_conf_dir()
 
 def gen_reverse_zone(db_dict):
     zone = db_dict.pop('zone')
