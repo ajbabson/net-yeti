@@ -1,6 +1,8 @@
 
 import re
 
+model = re.compile(r'Model:\s(\S+)')
+
 # ipv4 cidr
 ipv4_cidr = re.compile(r'((\d+\.){3}\d+\/\d+)')
 rfc1918_a = re.compile(r'')
