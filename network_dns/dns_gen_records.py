@@ -4,7 +4,7 @@ import argparse
 import os,sys
 import re
 import sys
-sys.path.insert(0, '../tools')
+sys.path.insert(0, '../')
 import modules.filelib as flib
 import modules.parsers as parse
 import ipdb
