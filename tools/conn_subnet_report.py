@@ -51,9 +51,7 @@ else:
 if args.dir:
     conf_dir = args.dir
 else:
-    conf_dir = os.environ.get('CONF_DIR')
-    if conf_dir == None:
-        conf_dir = '/var/rancid/all_configs/'
+    conf_dir = flib.get_conf_dir()
 
 if not args.regex:
     regex = '*'

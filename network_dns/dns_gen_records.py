@@ -64,30 +64,13 @@ for zonefile, ip_regex in ipdb.zones:
 
 args = parser.parse_args()
 
-domain = 'example.com.'
-
-def get_conf_dir():
-    conf_dir = os.environ.get('CONF_DIR')
-    if conf_dir:
-        return conf_dir
-    userhome = os.getenv('HOME')
-    conf_dir_var = '/'.join([userhome, '.conf_dir'])
-    if os.path.isfile(conf_dir_var):
-        with open(conf_dir_var, 'rt') as fh:
-            conf_dir = fh.readlines()
-            for line in conf_dir:
-                if line.startswith('#'):
-                    continue
-                else:
-                    conf_dir = line.rstrip()
-        if os.path.isdir(conf_dir):
-            return conf_dir
-    return 'configs/'
+# don't forget the trailing .
+domain = 'foo.example.net.'
 
 if args.dir:
     conf_dir = args.dir
 else:
-    conf_dir = get_conf_dir()
+    conf_dir = flib.get_conf_dir()
 
 def gen_reverse_zone(db_dict):
     zone = db_dict.pop('zone')

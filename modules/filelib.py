@@ -3,7 +3,27 @@
 import modules.shared_regex as rgx
 import glob
 from os import path
+from os import environ
+from os import getenv
 import re
+
+def get_conf_dir():
+    conf_dir = environ.get('CONF_DIR')
+    if conf_dir:
+        return conf_dir
+    userhome = getenv('HOME')
+    conf_dir_var = '/'.join([userhome, '.conf_dir'])
+    if path.isfile(conf_dir_var):
+        with open(conf_dir_var, 'rt') as fh:
+            conf_dir = fh.readlines()
+            for line in conf_dir:
+                if line.startswith('#'):
+                    continue
+                else:
+                    conf_dir = line.rstrip()
+        if path.isdir(conf_dir):
+            return conf_dir
+    return 'configs/'
 
 def get_config_list(conf_dir, regex='*'):
     '''
