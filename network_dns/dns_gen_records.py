@@ -126,11 +126,10 @@ configs = flib.get_config_list(conf_dir)
 
 ip_dict = {}
 
-for hostname, platform in configs:
+for hostname, conf_path, platform in configs:
     host_ip_dict = {hostname: {}}
-    fullpath = '/'.join([conf_dir, hostname])
-    if os.path.isfile(fullpath):
-        with open(fullpath, encoding='utf-8') as fh:
+    if os.path.isfile(conf_path):
+        with open(conf_path, encoding='utf-8') as fh:
             config_lines = fh.readlines()
     else:
         print("Hmmm, {0} doesn't appear to be a file.".format(fullpath))
