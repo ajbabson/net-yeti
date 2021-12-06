@@ -28,7 +28,7 @@ examples:
     conn_subnet_report.py
     conn_subnet_report.py --pub
     conn_subnet_report.py --priv
-    conn_subnet_report.py --regex='*ams100*'
+    conn_subnet_report.py --regex='*edge*'
     conn_subnet_report.py --priv --dir='/tmp/configs/'
 
       '''))
