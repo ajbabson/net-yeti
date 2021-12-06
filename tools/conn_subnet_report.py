@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import os,sys
+import os
+import sys
 import ipaddress
-import modules.filelib2 as flib
-#import modules.filelib as flib
+sys.path.insert(0, '../')
+import modules.filelib as flib
 import modules.parsers as parse
 import re
 
