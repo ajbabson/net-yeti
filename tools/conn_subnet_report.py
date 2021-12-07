@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
+import json
+from os import path
+from os import stat
 import sys
+import time
 import ipaddress
 sys.path.insert(0, '../')
 import modules.filelib as flib
@@ -31,6 +34,9 @@ examples:
     conn_subnet_report.py --regex='*edge*'
     conn_subnet_report.py --priv --dir='/tmp/configs/'
 
+The script will write a json file of data to the current directory which will be
+used for subsequent runs of the script to improve performance.  This data will be
+refreshed if the timestamp is more than 24 hours old.
       '''))
 parser.add_argument(
   "--pub", help="Find public IP addresses.", action="store_true")
@@ -40,6 +46,8 @@ parser.add_argument(
   "--dir", help="Alternate directory where network host configs are located.")
 parser.add_argument(
   "--regex", help="Limit to specific hostnames.")
+
+subnet_json = 'conn_subnets.json'
 
 args = parser.parse_args()
 
@@ -58,23 +66,39 @@ if not args.regex:
 else:
     regex = args.regex
 
-strip_domain = '.service-now.com'
+def pull_from_configs():
+    strip_domain = '.example.net'
+    configs = flib.get_config_list(conf_dir, regex)
+    ip_dict = {}
+    # the ipaddress module does not count this as private
+    cgnat_net = ipaddress.ip_network('100.64.0.0/10')
+    for hostname, conf_path, platform in configs:
+        hostname = hostname.replace(strip_domain, '')
+        config_lines = []
+        with open(conf_path, encoding='utf-8') as fh:
+            config_lines = fh.readlines()
+        host_ip_dict = {hostname: {}}
+        E = enumerate(config_lines)
+        parse.parse_any(hostname, platform, E, host_ip_dict) 
+        ip_dict.update(host_ip_dict)
+    return ip_dict
 
-configs = flib.get_config_list(conf_dir, regex)
-ip_dict = {}
+def refresh_data():
+    ip_dict = pull_from_configs()
+    with open('conn_subnets.json', 'wt') as f:
+        f.write(json.dumps(ip_dict))
+    return ip_dict
 
-# for some reason the ipaddress module does not count this as private
-cgnat_net = ipaddress.ip_network('100.64.0.0/10')
-
-for hostname, conf_path, platform in configs:
-    hostname = hostname.replace(strip_domain, '')
-    config_lines = []
-    with open(conf_path, encoding='utf-8') as fh:
-        config_lines = fh.readlines()
-    host_ip_dict = {hostname: {}}
-    E = enumerate(config_lines)
-    parse.parse_any(hostname, platform, E, host_ip_dict) 
-    ip_dict.update(host_ip_dict)
+if not path.isfile(subnet_json):
+    ip_dict = refresh_data()
+else:
+    delta = time.time() - path.getctime(subnet_json)
+    #          one day
+    if delta > 86400:
+        ip_dict = refresh_data()
+    else:
+        with open(subnet_json) as f:
+            ip_dict = json.load(f)    
 
 for hostname, intfs in sorted(ip_dict.items()):
     for intf, ip_addrs in intfs.items():
