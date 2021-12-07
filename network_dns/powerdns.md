@@ -16,8 +16,7 @@ My next choice was <a href="https://www.powerdns.com/" target="_blank">PowerDNS<
 # Package Installation
 Install the packages:
 
-`sudo apt-get install pdns-server`
-`sudo apt-get install pdns-tools`
+`sudo apt-get install pdns-server pdns-tools`
 
 <u>Note</u>: There is a package called `pdns-recursor` which does not need to be installed as it is a package to use if you only want a recursor and not an authoritative name server.  The `pdns-server` package contains both authoritative and recursor capabilities.
 
