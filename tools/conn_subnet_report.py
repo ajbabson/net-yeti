@@ -4,6 +4,7 @@ import argparse
 import json
 from os import path
 from os import stat
+from os import getenv
 import sys
 import time
 import ipaddress
@@ -47,7 +48,8 @@ parser.add_argument(
 parser.add_argument(
   "--regex", help="Limit to specific hostnames.")
 
-subnet_json = 'conn_subnets.json'
+userhome = getenv('HOME')
+subnet_json = '/'.join([userhome, '.conn_subnets.json'])
 
 args = parser.parse_args()
 
@@ -85,7 +87,7 @@ def pull_from_configs():
 
 def refresh_data():
     ip_dict = pull_from_configs()
-    with open('conn_subnets.json', 'wt') as f:
+    with open(subnet_json, 'wt') as f:
         f.write(json.dumps(ip_dict))
     return ip_dict
 
@@ -97,7 +99,7 @@ else:
     if delta > 86400:
         ip_dict = refresh_data()
     else:
-        with open(subnet_json) as f:
+        with open(subnet_json, 'rt') as f:
             ip_dict = json.load(f)    
 
 for hostname, intfs in sorted(ip_dict.items()):
