@@ -19,10 +19,20 @@ ios_intf_ip_v4 = re.compile(r'ip\saddress\s((\d+\.){3}\d+)\s((\d+\.){3}\d+)')
 nxos_intf_ip_v4 = re.compile(r'ip\saddress\s((\d+\.){3}\d+\/\d+)')
 
 # junos
-junos_intf = re.compile(r'^\s+([a-z]+\-?[\d\/]+)\s{')
-junos_node = re.compile(r'\s+(node\d+)\s{')
+#junos_intf = re.compile(r'^\s+([a-z]+\-?[\d\/]+)\s{')
+junos_intf = re.compile(r'^\s+(\S+\d(\S+)?)\s{')
+model = re.compile(r'Model:\s(\S+)')
+junos_version = re.compile(r'Junos:\s(\S+)')
                                                    # check paren> v  v
 junos_intf_ip_v4 = re.compile(r'\saddress\s((\d+\.){3}\d+\/\d+)(\s{|;)')
+
+# junos srx
+srx_version = re.compile(r'JUNOS\sSoftware\sRelease\s\[(\S+)\]')
+junos_node = re.compile(r'\s+(node\d+)\s{')
+
+# junos other
+ex_version = re.compile(r'JUNOS\sEX\s+Software\sSuite\s\[(\S+)\]')
+qfx3500_version = re.compile(r'JUNOS\sBase\sOS\sboot\s\[(\S+)\]')
 
 # cumulus
 cumul_intf = re.compile(r'^interface\s([\w\d\.]+)')
