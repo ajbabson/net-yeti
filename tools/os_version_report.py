@@ -6,6 +6,7 @@ import time
 from os import getenv
 from os import environ
 from os import path
+import re
 import sys
 sys.path.insert(0, '../')
 import modules.filelib as flib
@@ -33,8 +34,11 @@ example:
    os_version_report.py --model qfx --version '17\.3R3.*\.3'
    os_version_report.py -m '(mx|qfx)' -v '14\.'
       '''))
-parser.add_argument("-m", "--model", help="Hardware model to match")
-parser.add_argument("-v", "--version", help="JunOS version to match")
+parser.add_argument("-m", "--model", 
+  help="Hardware model to match")
+parser.add_argument("-v", "--version", 
+  help="JunOS version to match")
+parser.add_argument("-o", "--hostname", help="Hostname to match")
 parser.add_argument("--dir", help=
 '''
 Directory where configs are located.  This overrides the environmental
@@ -63,7 +67,7 @@ if not path.isfile(os_json):
     host_facts = refresh_data()
 else:
     delta = time.time() - path.getctime(os_json)
-    #          one day
+    # refresh data if more than one day old
     if delta > 86400:
         host_facts = refresh_data()
     else:
@@ -91,11 +95,32 @@ for k, v in host_facts.items():
     except:
         models[v['model']] = [(v['version'], k)]
 
-
-if args.version and not args.model:
+if args.hostname:
+    def print_it(host, model, version):
+        print('{0:<20} {1:<17} {2}'.format(host, model, version))
+    for host, facts in host_facts.items():
+        if re.search(args.hostname, host):
+            model   = facts['model']
+            version = facts['version']
+            if args.version and not args.model:
+                if re.search(args.version, version):
+                    print_it(host, model, version)
+            elif args.model and not args.version:
+                if re.search(args.model, model):
+                    print_it(host, model, version)
+            elif args.model and args.version:
+                if re.search(args.model, model) and re.search(
+                  args.version, version):
+                    print_it(host, model, version)
+            else:
+                print('{0:<20} {1:<17} {2}'.format(host, model, version))
+        else:
+            continue
+elif args.version and not args.model:
     for k, v in versions.items():
         if re.search(args.version, k):
-            [ print('{0:<20} {1:<17} {2}'.format(host, model, k)) for host, model in v ]
+            [ print('{0:<20} {1:<17} {2}'.format(
+              host, model, k)) for host, model in v ]
 elif args.model and not args.version:
     for k, v in models.items():
         if re.search(args.model.lower(), k):
@@ -113,3 +138,5 @@ else:
         total = v + total
         print(k, v)
     print('TOTAL:', total)
+
+
