@@ -29,10 +29,10 @@ pdns      1307  0.0  0.8 607928 18220 ?        Sl   Feb17   0:04 /usr/sbin/pdns_
 
 A single Systemd service `pdns` can be used to start and stop these.  While PowerDNS provides a utility `pdns_control` to perform most reload and refresh operations, you may find the need to completely restart the service on occasion.
 
-`sudo service pdns stop`
-`sudo service pdns start`
+`sudo systemctl stop pdns`
+`sudo systemctl start pdns`
 or
-`sudo service pdns restart`
+`sudo systemctl restart pdns`
 # Configuration
 ## pdns.conf
 
