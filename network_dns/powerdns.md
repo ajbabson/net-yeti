@@ -81,7 +81,7 @@ According to the documentation, you can reload the options in `pdns.conf` using 
 I don't recall if these files are created during the initial installation or if they are added after you set `launch=bind` in `pdns.conf` and then restart the service, but regardless, the following file was automatically created with the following contents:
 
 ```
-root@pa2dns01:/etc/powerdns# cat /etc/powerdns/pdns.d/pdns.simplebind.conf
+root@netns01:/etc/powerdns# cat /etc/powerdns/pdns.d/pdns.simplebind.conf
 launch+=bind
 bind-config=/etc/powerdns/bindbackend.conf
 ```
