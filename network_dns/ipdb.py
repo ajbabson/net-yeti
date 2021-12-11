@@ -6,7 +6,7 @@ zone_dir = 'zones/'
 
 # add your custom SOA to add to the top of each zone file
 soa = """$TTL 4h
-@ IN SOA netns01.foo.example.net. admin.example.com. (
+@ IN SOA netns01.foo.example.net. admin.example.net. (
      1     ; Serial
      3h    ; Refresh after 3 hours
      1h    ; Retry after 1 hour
@@ -14,7 +14,7 @@ soa = """$TTL 4h
      1h )  ; Negative caching TTL of 1 hour
 
 @              IN NS     netns01.foo.example.net.
-ns1            IN A      192.0.2.1
+netns01        IN A      192.0.2.1
 """
 
 # add one regex for each network you want to match
