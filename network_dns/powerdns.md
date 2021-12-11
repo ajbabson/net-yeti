@@ -123,7 +123,7 @@ zone "192.168.in-addr.arpa" in {
 
 ### The Current Model
 
-In this first version 1.0 of the Network DNS server, I just wanted to keep things simple and get it working quickly.   The `net.arkadin.lan` and `192.168.in-addr.arpa` zones will likely not need to change, however `10.in-addr.arpa` and `172.in-addr.arpa` will probably evolve into different forms.
+In this first version 1.0 of the Network DNS server, I just wanted to keep things simple and get it working quickly.   The `foo.example.net` and `192.168.in-addr.arpa` zones will likely not need to change, however `10.in-addr.arpa` and `172.in-addr.arpa` will probably evolve into different forms.
 
 Right now, it's just easier to have every 10.x PTR record in a single zone file.  More on this later.
 
