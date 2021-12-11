@@ -78,7 +78,7 @@ According to the documentation, you can reload the options in `pdns.conf` using 
 
 ## BIND (bindbackend.conf)
 
-I don't recall if these files are created during the initial installation or if they are added after you set `launch=bind` in `pdns.conf` and then restart the service, but regardless, the following file was automatically created with the following contents:
+By default the `pdns.simplebind.conf` file should contain the path to the `bind-config` file.
 
 ```
 root@netns01:/etc/powerdns# cat /etc/powerdns/pdns.d/pdns.simplebind.conf
@@ -86,7 +86,7 @@ launch+=bind
 bind-config=/etc/powerdns/bindbackend.conf
 ```
 
-The `/etc/powerdns/bindbackend.conf` file was also created but was empty.  This is the file where we add the equivalent of a BIND-style `named.conf`.  While you could change the `bind-config` option in `pdns.simplebind.conf` to point to a different filename like `named.conf` there really is no reason to so I left the default naming of `bindbackend.conf`.
+The `/etc/powerdns/bindbackend.conf` file will initially be empty.  This is the file where we add the equivalent of a BIND-style `named.conf`.  While you could change the `bind-config` option in `pdns.simplebind.conf` to point to a different filename like `named.conf` there really is no reason to so I left the default naming of `bindbackend.conf`.
 
 BIND's `named.conf` supports a wide range of options and directives of which many (most?) are not understood or supported by PowerDNS.  In most cases the unsupported options will simply be ignored which allows someone who wants to migrate an existing BIND name server to PowerDNS to simply copy over the entire `named.conf` and the relevant portions will be understood and used.  From the PowerDNS documentation:
 
@@ -94,9 +94,11 @@ BIND's `named.conf` supports a wide range of options and directives of which man
 
 For our use case we simply create the contents of `bindbackend.conf` from scratch and the configuration for each zone we want to serve is quite simple.  Please note that in this example, I used db.172 so I could put all records for 172.16/12 in a single zone file.  This is because I knew i did not need this server to be able to resolve any public records in 172/8 that fall outside of the 172.16/12 private range.  The script provided in this project expicitly declares all of the /16 ranges that are part of 172.16/12. You can easily modify the `ipdb.py` file to use a single db.172 zone file as I did.
 
+Your bind configuration file needs to contain a declaration for each zone for which your name server will be authoritative.  Follow this example, and make sure the zone files are placed in the declared locations.  Note, the `/etc/powerdns/zones/` directory does not exist by default and is the directory I created to place my zone files.
+
 ```
 root@netns01:/etc/powerdns# cat bindbackend.conf
-zone "net.arkadin.lan" in {
+zone "foo.example.net" in {
   type master;
   file "/etc/powerdns/zones/db.foo.example.net";
 };
@@ -116,8 +118,6 @@ zone "192.168.in-addr.arpa" in {
   file "/etc/powerdns/zones/db.192.168";
 };
 ```
-
-All we have to do is declare each zone, say that we want to serve it as master, and then provide a path to the zone file.
 
 ## The Zone Files
 
