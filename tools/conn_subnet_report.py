@@ -68,12 +68,13 @@ if not args.regex:
 else:
     regex = args.regex
 
+# the ipaddress module does not count this as private
+cgnat_net = ipaddress.ip_network('100.64.0.0/10')
+
 def pull_from_configs():
     strip_domain = '.example.net'
     configs = flib.get_config_list(conf_dir, regex)
     ip_dict = {}
-    # the ipaddress module does not count this as private
-    cgnat_net = ipaddress.ip_network('100.64.0.0/10')
     for hostname, conf_path, platform in configs:
         hostname = hostname.replace(strip_domain, '')
         config_lines = []
