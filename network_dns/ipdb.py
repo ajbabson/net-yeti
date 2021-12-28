@@ -1,6 +1,10 @@
 
 import re
 
+# add your domain and don't forget the trailing dot
+# this will be appended to hostnames to create the PTR records
+domain = 'foo.example.net.'
+
 # add the destination directory to save the zone files
 zone_dir = 'zones/'
 
