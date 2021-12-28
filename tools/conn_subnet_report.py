@@ -19,6 +19,15 @@ parser = argparse.ArgumentParser(
 Parse network hosts configurations and print a list of three columns consisting
 of the hostname, interface, and connected subnet.
 
+All data is pulled from Rancid backups.  The first time you run the script it
+could take up to one minute to parse all the necessary configs.  That data will
+be written to ~/.conn_subnets.json.  This file will be used for each subsequent
+run of the script, greatly improving performance.
+
+If your ~/.conn_subnets.json file is older than 24 hours, the script will
+automatically refresh the data.  You can force a refresh of the data parsed from
+the configs by deleting ~/.conn_subnets.json.
+
 The script checks for the location of configs in the following order:
 
 1. A path provided the --dir argument
@@ -63,17 +72,20 @@ if args.dir:
 else:
     conf_dir = flib.get_conf_dir()
 
+# glob everything if no regex provided
 if not args.regex:
     regex = '*'
 else:
     regex = args.regex
 
-# the ipaddress module does not count this as private
+# the ipaddress module does not count this as private, but I would like to
 cgnat_net = ipaddress.ip_network('100.64.0.0/10')
 
 def pull_from_configs():
     strip_domain = '.example.net'
     configs = flib.get_config_list(conf_dir, regex)
+    if len(configs) == 0:
+        print("No configs found.")
     ip_dict = {}
     for hostname, conf_path, platform in configs:
         hostname = hostname.replace(strip_domain, '')
@@ -88,8 +100,10 @@ def pull_from_configs():
 
 def refresh_data():
     ip_dict = pull_from_configs()
-    with open(subnet_json, 'wt') as f:
-        f.write(json.dumps(ip_dict))
+    # only write the file if no regex was provided and it's a full dump
+    if not args.regex:
+        with open(subnet_json, 'wt') as f:
+            f.write(json.dumps(ip_dict))
     return ip_dict
 
 if not path.isfile(subnet_json):
