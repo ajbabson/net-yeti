@@ -18,7 +18,8 @@ for RFC1918 IP addresses based on the following address classes:
 a: 10.0.0.0/8
 b: 172.16.0.0/12
 c: 192.168.0.0/16
-public: 185.37.220.0/22, 77.111.208.0/22, 192.206.95.0/24, 103.214.228.0/24
+
+public: ranges that you must specify in ipdb.py
 
 Network host configurations are parsed to obtain the IP address data so you must
 provide a directory with a configuration file for each host you want to process.
@@ -30,10 +31,8 @@ The script checks for the location of configs in the following order:
 3. A path provided in a file named ~/.conf_dir
 4. Default path is ./configs/
 
-The easiest is just to run the script while logged in to atlrancid01 and use the
-default path.
-
-Zone files will be written to the ./zones directory.
+Zone files will be written to the ./zones/ directory by default.  This can be
+changed in ipdb.py.
 
 examples:
     dns_gen_records.py a
@@ -41,7 +40,7 @@ examples:
     dns_gen_records.py c --out
     dns_gen_records.py public
 
-    dns_gen_records.py loop --dir='/home/me/configs/NETWORK/'
+    dns_gen_records.py c --dir='/home/me/configs/network/'
 
       '''))
 parser.add_argument(
@@ -64,8 +63,7 @@ for zonefile, ip_regex in ipdb.zones:
 
 args = parser.parse_args()
 
-# don't forget the trailing .
-domain = 'foo.example.net.'
+domain = ipdb.domain
 
 if args.dir:
     conf_dir = args.dir
