@@ -137,4 +137,3 @@ for hostname, intfs in sorted(ip_dict.items()):
            else:
                continue
                #print('skipping subnet {0}'.format(subnet_obj))
-
