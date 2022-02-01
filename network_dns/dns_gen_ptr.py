@@ -44,7 +44,9 @@ examples:
 
       '''))
 parser.add_argument(
-  "ptr_class", help="Which class of addresses to process: a, b, or c.")
+  "ptr_class", help='''
+Which class of addresses to process: RFC1918 [a, b, c] or public
+''')
 parser.add_argument(
   "--dir", help="Alternate directory where network host configs are located.")
 parser.add_argument("--out", help="Print to stdout.", action="store_true")
