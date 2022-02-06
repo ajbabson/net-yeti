@@ -1,6 +1,8 @@
-# Network Reverse DNS Project
-DNS independence is sometimes a good thing.  Nothing beats a locally available copy of all your forward and reverse DNS records.  A recent, very high-visibility outage helps prove the point.
+# Zero Touch Reverse DNS
 
+Do you want to have current, accurate reverse DNS entries for your network hosts without having to do any work once the solution is put in place?  Read on!  This project was initially conceived in the scope of network hosts, mainly routers and switches, and the occasional firewall.
+
+The main problem to solve is not a hard one.  If you have configuration backups
 Another problem is arises from DNS administrative boundaries.  In a previous role, I found that every reverse record I wanted added for network IP addresses required a cumbersome ticket submission process to a separate department that controlled authoritative access of reverse zone files.  Due to the frequency of new provisioning and changes in the network environment, this situation was not tenable.
 
 There are certainly good arguments for not having parallel DNS systems.  However, DNS is not the tool to ensure that you don't have IP address conflicts.  In general, the only systems that really need reverse address info are those systems you are using for network access and troubleshooting.  It's nice if those systems can also resolve PTR records for application servers, but that can also easily be done in a separate terminal from a system that can resolve those addresses.  What I primarily needed was to be able to get valid host and interface information when running traceroutes through the network or when faced with a long list of IP addresses that I needed to identify.
