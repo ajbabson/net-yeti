@@ -233,7 +233,7 @@ Check the `pdns_control` man pages for additional information.
 
 ## Automating Zone File Creation
 
-The `dns_gen_records.py` script will parse a directory of network configurations and print to STDOUT a list of PTR records in a format that can be directly added to a BIND style zone file.  Note that it does not print out the SOA section that is required at the top of the zone file so be careful not to overwrite that section when updating a zone file.
+The `dns_gen_ptr.py` script will parse a directory of network configurations and print to STDOUT a list of PTR records in a format that can be directly added to a BIND style zone file.  Note that it does not print out the SOA section that is required at the top of the zone file so be careful not to overwrite that section when updating a zone file.
 
 The idea for now is that the full list of PTR records can be generated periodically and inserted into each reverse zone file over the existing records.  There is the opportunity also to have a cron job periodically pull updated configs from atlrancid01 and for the script to automatically update the reverse zone files.
 
