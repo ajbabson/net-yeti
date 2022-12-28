@@ -2,7 +2,6 @@
 
 import re
 import sys
-sys.path.insert(0, '../../tools')
 import modules.shared_regex as rgx
 
 def ios(hostname, E, host_ip_dict):
